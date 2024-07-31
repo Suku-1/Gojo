@@ -1,0 +1,80 @@
+import discord
+from discord.ext import commands
+from discord.ext.commands import has_permissions
+
+TOKEN = 'MTIzNzUwMDU1Nzk3NjAxNTAxMA.G9sO2l.nl_VANoWbAbOX_81EcWYwKId4IPZn6daVzhGXQ'
+
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+TIMEOUT_PERIODS = {
+    'Technique Blue': 10 * 60,
+    'Reversal Technique Red': 15 * 60,
+    'Imaginary Technique: Hollow Purple': 60 * 60,
+    'Hollow Nuke': None
+}
+
+TECHNIQUE_GIFS = {
+    'Technique Blue': 'https://media.giphy.com/media/3o6ozsz4ZRIAP4eOg8/giphy.gif',
+    'Reversal Technique Red': 'https://media.giphy.com/media/3o6ozG3Ri8hl0mt72c/giphy.gif',
+    'Imaginary Technique: Hollow Purple': 'https://media.giphy.com/media/3o6ozlnGqB5noZTugI/giphy.gif',
+    'Hollow Nuke': 'https://media.giphy.com/media/3o6ozF5eeknY2gGq8w/giphy.gif'
+}
+
+DEPLOYMENT_CHANNEL_ID = 1239895630063730746
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user}')
+
+@bot.command(name='technique')
+@has_permissions(administrator=True)
+async def technique(ctx, *, technique_name: str):
+    if technique_name in TIMEOUT_PERIODS:
+        gif_url = TECHNIQUE_GIFS.get(technique_name)
+        if gif_url:
+            await ctx.send(gif_url)
+
+        if technique_name == 'Hollow Nuke':
+            await ctx.guild.ban(ctx.author, reason='Used Hollow Nuke')
+            await ctx.send(f'{ctx.author.mention} has been banned for using Hollow Nuke!')
+        else:
+            duration = TIMEOUT_PERIODS[technique_name]
+            if duration:
+                await ctx.author.timeout(duration)
+                await ctx.send(f'{ctx.author.mention} has been timed out for {duration // 60} minutes due to {technique_name}!')
+    else:
+        await ctx.send('Unknown technique.')
+
+@bot.command(name='deploy')
+@has_permissions(administrator=True)
+async def deploy(ctx):
+    channel = bot.get_channel(DEPLOYMENT_CHANNEL_ID)
+    if channel:
+        await channel.send(f'{ctx.author.mention} has triggered a deployment!')
+        await ctx.send('Deployment notification sent!')
+    else:
+        await ctx.send('Deployment channel not found.')
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    responses = {
+        "I'm the strongest after all": "Yes, that's true!",
+        "Nah I'd win": "Are you sure about that?",
+        "You're weak": "Don't be too confident!"
+    }
+
+    response = responses.get(message.content)
+    if response:
+        await message.channel.send(response)
+
+    await bot.process_commands(message)
+
+bot.run(TOKEN)
+python gojo_bot.py
